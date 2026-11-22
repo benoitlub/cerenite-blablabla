@@ -44,7 +44,7 @@ document.querySelector('#voicePick').addEventListener('click',selectVoice);
 if('speechSynthesis' in window){speechSynthesis.addEventListener('voiceschanged',()=>{if(selectedVoiceURI&&!frenchVoices().some(v=>v.voiceURI===selectedVoiceURI))selectedVoiceURI=""})}
 function stopCaptions(){captionRun++;if(captionTimer!==null){clearInterval(captionTimer);captionTimer=null}}
 function showCaption(text,position){
- const words=text.slice(0,Math.max(0,position)).trim().split(/\\s+/);
+ const words=text.slice(0,Math.max(0,position)).trim().split(/\s+/);
  const visible=words.slice(-18).join(" ");
  reply.replaceChildren();
  const line=document.createElement("span");line.className="caption";line.textContent=visible;
