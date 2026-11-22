@@ -5,7 +5,7 @@
 </style></head><body><div class="app"><header><span><b>BNN24</b> · LIVE FROM MY BRAIN</span><span>FEUCH LAB</span></header><main><div id="orb" class="orb" aria-hidden="true"></div><div class="line" id="reply" aria-live="polite">Bonsoir, je suis Cérénité Blablabla. Qu'est-ce qui traverse ton ciel aujourd'hui ?</div><div class="hint" id="status" role="status">Appuie sur mon portrait pour parler.</div></main><footer><button class="avatar" id="mic" aria-label="Parler à Cérénité" aria-pressed="false">✧</button><div class="controls"><button class="small" id="config">Connecter Mistral</button><button class="small" id="voicePick">Changer de voix</button><button class="small" id="mute">Couper la voix</button><button class="small" id="stop">Arrêter</button></div><form class="inputbar" id="form"><input id="message" autocomplete="off" aria-label="Écrire à Cérénité" placeholder="Ou écris-moi quelques mots…"><button type="submit">Envoyer</button></form><div class="note">Conversation Mistral via Publisher après connexion privée. Mode local de secours. Ce n'est pas un dispositif médical ni une thérapie.</div></footer></div>
 <script>
 const reply=document.querySelector('#reply'),status=document.querySelector('#status'),orb=document.querySelector('#orb'),mic=document.querySelector('#mic'),mute=document.querySelector('#mute'),stop=document.querySelector('#stop'),form=document.querySelector('#form'),message=document.querySelector('#message');
-let selectedVoiceURI="",voiceOn=true,recognition=null,active=false,endpoint="https://blacklace-publisher-worker.benoitlubert.workers.dev/api/cerenite/chat",code="",pending=null;const history=[];
+let selectedVoiceURI="",voiceStyle=0,voiceOn=true,recognition=null,active=false,endpoint="https://blacklace-publisher-worker.benoitlubert.workers.dev/api/cerenite/chat",code="",pending=null;const history=[];
 const rules=[
 {test:/bonjour|salut|bonsoir|coucou/i,answers:["Bonjour ! Ici BNN24, où les pensées ont parfois une météo imprévisible.","Te voilà ! J'avais justement laissé une petite place au hasard."]},
 {test:/stress|angoiss|anxie|inquiet|peur|tendu/i,answers:["Et si cette inquiétude était un nuage, de quelle couleur serait-il ? Tu peux simplement le décrire.","Il y a parfois du vent à l'intérieur. Tu n'as rien à réussir ici."]},
@@ -21,16 +21,28 @@ function choose(a){return a[(index++)%a.length]}
 function setStatus(s){status.textContent=s}
 function speechOnly(text){return text.replace(/\*[^*\n]{1,180}\*/g,' ').replace(/_[^_\n]{1,180}_/g,' ').replace(/\*{1,3}/g,'').replace(/\s+/g,' ').trim()}
 function frenchVoices(){if(!('speechSynthesis' in window))return [];return speechSynthesis.getVoices().filter(v=>/^fr(?:-|$)/i.test(v.lang))}
+const voiceStyles=[
+ {name:"Naturelle",rate:.93,pitch:1.03},
+ {name:"Velours nocturne",rate:.83,pitch:.84},
+ {name:"Radio malicieuse",rate:1.08,pitch:1.16},
+ {name:"Douce et posée",rate:.82,pitch:1.1}
+];
 function selectVoice(){
- const voices=frenchVoices();if(!voices.length){setStatus("Aucune voix française alternative disponible sur ce navigateur.");return}
- const current=voices.findIndex(v=>v.voiceURI===selectedVoiceURI);
- const next=voices[(current+1)%voices.length];selectedVoiceURI=next.voiceURI;
- setStatus("Voix : "+next.name+" — "+next.lang+" ("+(current+2>voices.length?1:current+2)+"/"+voices.length+")");
+ if(!('speechSynthesis' in window)){setStatus("Synthèse vocale indisponible.");return}
+ const voices=frenchVoices();
+ if(voices.length>1){
+  const current=voices.findIndex(v=>v.voiceURI===selectedVoiceURI);
+  const next=voices[(current+1)%voices.length];selectedVoiceURI=next.voiceURI;
+  setStatus("Voix : "+next.name+" — "+next.lang);
+ }else{
+  voiceStyle=(voiceStyle+1)%voiceStyles.length;
+  setStatus("Style vocal : "+voiceStyles[voiceStyle].name+" (voix Android par défaut)");
+ }
  speak("Bonsoir ! Ici Cérénité Blablabla. Comment trouvez-vous ma nouvelle voix ?");
 }
 document.querySelector('#voicePick').addEventListener('click',selectVoice);
-if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=()=>{if(selectedVoiceURI&&!frenchVoices().some(v=>v.voiceURI===selectedVoiceURI))selectedVoiceURI=""}}
-function speak(text){if(!voiceOn||!('speechSynthesis' in window))return; speechSynthesis.cancel();const spoken=speechOnly(text);if(!spoken)return;const u=new SpeechSynthesisUtterance(spoken);u.lang='fr-FR';const chosen=frenchVoices().find(v=>v.voiceURI===selectedVoiceURI);if(chosen){u.voice=chosen;u.lang=chosen.lang}u.rate=.93;u.pitch=1.03;u.onstart=()=>orb.classList.add('speaking');u.onend=u.onerror=()=>orb.classList.remove('speaking');speechSynthesis.speak(u)}
+if('speechSynthesis' in window){speechSynthesis.addEventListener('voiceschanged',()=>{if(selectedVoiceURI&&!frenchVoices().some(v=>v.voiceURI===selectedVoiceURI))selectedVoiceURI=""})}
+function speak(text){if(!voiceOn||!('speechSynthesis' in window))return; speechSynthesis.cancel();const spoken=speechOnly(text);if(!spoken)return;const u=new SpeechSynthesisUtterance(spoken);u.lang='fr-FR';const chosen=frenchVoices().find(v=>v.voiceURI===selectedVoiceURI);if(chosen){u.voice=chosen;u.lang=chosen.lang}u.rate=voiceStyles[voiceStyle].rate;u.pitch=voiceStyles[voiceStyle].pitch;u.onstart=()=>orb.classList.add('speaking');u.onend=u.onerror=()=>orb.classList.remove('speaking');speechSynthesis.speak(u)}
 async function respond(input){
 const t=input.trim().slice(0,500);if(!t)return;
 if(pending)pending.abort();const controller=new AbortController();pending=controller;
