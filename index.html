@@ -73,7 +73,9 @@ if('speechSynthesis' in window){speechSynthesis.addEventListener('voiceschanged'
 function stopCaptions(){captionRun++;lastCaption="";if(captionTimer!==null){clearInterval(captionTimer);captionTimer=null}}
 let captionElement=null,lastCaption="";
 function showCaption(text,position){
- const cut=Math.max(0,Math.min(text.length,position));\n const end=cut===text.length?cut:Math.max(0,text.lastIndexOf(" ",cut));\n const prefix=text.slice(0,end);
+ const cut=Math.max(0,Math.min(text.length,position));
+ const endcut===text.length?cut:Math.max(0,text.lastIndexOf(" ",cut));
+ const prefix=text.slice(0,end);
  // Reveal whole words only, keeping a stable two-to-three-line subtitle.
  const words=prefix.trim().split(/\s+/).filter(Boolean);
  const visible=words.slice(-13).join(" ");
